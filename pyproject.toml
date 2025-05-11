@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "message-inbox"
-version = "0.0.3"
+version = "0.0.4"
 description = "Message inbox for SQLAlchemy"
 authors = ["Daniil Smirnov <skeal.smirnov2004@mail.ru>"]
 readme = "README.md"

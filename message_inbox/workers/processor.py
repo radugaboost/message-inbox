@@ -11,7 +11,7 @@ from message_inbox.router import InboxRouter
 
 logger = get_logger(__name__)
 
-context_trace_id: ContextVar[str] = ContextVar("trace_id")
+context_trace_id: ContextVar[str | None] = ContextVar("trace_id")
 
 
 class MessageInboxProcessorWorker:
@@ -35,6 +35,7 @@ class MessageInboxProcessorWorker:
                     continue
 
                 contextvars.bind_contextvars(message_id=str(message.id), trace_id=message.trace_id)
+                context_trace_id.set(message.trace_id)
 
                 logger.info("Received message")
 
