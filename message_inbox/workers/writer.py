@@ -2,7 +2,7 @@ from json import JSONDecodeError, loads
 from typing import Any
 
 from aiokafka import AIOKafkaConsumer
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from structlog import contextvars, get_logger
 
 from message_inbox.repositories import MessageInboxRepository
@@ -12,10 +12,9 @@ logger = get_logger(__name__)
 
 
 class MessageInboxWriterWorker:
-    def __init__(self, session: AsyncSession, consumer: AIOKafkaConsumer):
-        self.session = session
+    def __init__(self, session_maker: async_sessionmaker[AsyncSession], consumer: AIOKafkaConsumer):
+        self.session_maker = session_maker
         self.consumer = consumer
-        self.repository = MessageInboxRepository(session)
 
     async def start_consuming(self) -> None:
         logger.info("Starting consuming")
@@ -44,23 +43,26 @@ class MessageInboxWriterWorker:
                 trace_id=trace_id,
             )
 
-            db_message = await self.repository.get_by_id(message_id)
-            if db_message is not None:
-                logger.info("The message has already been received", message_id=message_id)
-                continue
+            async with self.session_maker() as session:
+                repository = MessageInboxRepository(session)
 
-            validated_message_value = KafkaMessageValueSchema(**message_value)
-            validated_message = MessageSchema(
-                id=message_id,
-                topic=message.topic,
-                trace_id=trace_id,
-                payload=validated_message_value.payload,
-                event_type=validated_message_value.event_type,
-            )
-            await self.repository.create(validated_message)
-            await self.session.commit()
+                db_message = await repository.get_by_id(message_id)
+                if db_message is not None:
+                    logger.info("The message has already been received", message_id=message_id)
+                    continue
 
-            logger.info("The message has been written to the inbox", message_id=message_id)
+                validated_message_value = KafkaMessageValueSchema(**message_value)
+                validated_message = MessageSchema(
+                    id=message_id,
+                    topic=message.topic,
+                    trace_id=trace_id,
+                    payload=validated_message_value.payload,
+                    event_type=validated_message_value.event_type,
+                )
+                await repository.create(validated_message)
+                await session.commit()
+
+                logger.info("The message has been written to the inbox", message_id=message_id)
 
     @staticmethod
     def parse_headers(headers: list[tuple[str, bytes]]) -> dict[str, Any]:
