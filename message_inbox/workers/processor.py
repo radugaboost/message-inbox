@@ -1,5 +1,6 @@
 import inspect
 from asyncio import sleep
+from contextvars import ContextVar
 from json import loads
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -9,6 +10,8 @@ from message_inbox.repositories import MessageInboxRepository
 from message_inbox.router import InboxRouter
 
 logger = get_logger(__name__)
+
+context_trace_id: ContextVar[str] = ContextVar("trace_id")
 
 
 class MessageInboxProcessorWorker:
