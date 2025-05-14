@@ -1,7 +1,6 @@
 import inspect
 from asyncio import sleep
 from contextvars import ContextVar
-from json import loads
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from structlog import contextvars, get_logger
