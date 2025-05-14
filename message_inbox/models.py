@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import UUID, Boolean, DateTime, Index, String, func
+from sqlalchemy import UUID, Boolean, DateTime, Index, String, func, JSON
 from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -32,7 +32,7 @@ class MessageInbox(BaseModel):
     topic: Mapped[str] = mapped_column(String, nullable=False)
     trace_id: Mapped[str] = mapped_column(String, nullable=True)
     event_type: Mapped[str] = mapped_column(String, nullable=False)
-    payload: Mapped[str] = mapped_column(String, nullable=False)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
     is_processed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
 

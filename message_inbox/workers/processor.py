@@ -45,17 +45,15 @@ class MessageInboxProcessorWorker:
                         logger.info("No handler for event type %s", message.event_type)
                         continue
 
-                    message_payload = loads(message.payload)
-
                     sig = inspect.signature(handler)
                     param = next(iter(sig.parameters.values()))
                     annotation = param.annotation
 
-                    validated_payload = message_payload
+                    payload = message.payload
                     if inspect.isclass(annotation):
-                        validated_payload = annotation(**validated_payload)
+                        payload = annotation(**payload)
 
-                    await handler(validated_payload, session)
+                    await handler(payload, session)
                 except Exception as exc:
                     logger.error("Error processing message", exc_info=True)
                     raise exc

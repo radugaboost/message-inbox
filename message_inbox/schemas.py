@@ -11,10 +11,10 @@ class MessageSchema(BaseSchema):
     id: UUID
     topic: str
     event_type: str
-    payload: str
+    payload: dict[str, Any]
     trace_id: str | None = None
 
 
 class KafkaMessageValueSchema(BaseSchema):
     event_type: str
-    payload: str
+    payload: dict[str, Any]
